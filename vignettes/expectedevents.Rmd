@@ -1,0 +1,167 @@
+---
+title: "expectedevents: tutorial"
+author: "Dominic Magirr"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+## What problem does this solve?
+
+When designing a trial with a time-to-event endpoint, we often want to know how many events are expected at a given calendar time.
+
+We will typically have some information on recruitment...
+
+```{r}
+#### recruitment information
+recruitment_1 = list(n = 100, 
+                     r_period = 12, 
+                     k = 1)
+```
+
+...in this case, a single arm trial with 100 patients recruited over 12 months. The parameter $k$ dictates the shape of the recruitment curve:
+
+$$pr(\text{recruited by calendar time t}) = (t / \text{r_period}) ^ k.$$
+
+We also usually have a working assumption for the survival model:
+
+
+```{r}
+#### model for survival distribution
+model_1 = list(change_points = 4, 
+               lambdas = c(log(2) / 15, log(2) / 15))
+
+```
+
+
+In this package, we only allow piece-wise exponential models with at least 2 pieces. This is not really a restriction because we can easily approximate any parametric survival distribution. In the above example, I'm assuming an exponential model with median 15 months. To do this, I specify an arbitrary change-point, but the event rate either side of the change-point remains the same.
+
+
+How many events at a data cut-off (`dco`) at 30 months?
+
+```{r}
+devtools::load_all("..")
+
+expected_events_single_arm(dco = 30,
+                           recruitment = recruitment_1,
+                           model = model_1)
+```
+
+
+## Two-arm trial
+
+We can do the same thing for a two-arm trial
+
+```{r}
+recruitment_2 = list(n_0 = 100, 
+                     n_1 = 100, 
+                     r_period = 12, 
+                     k = 1)
+
+
+model_2 = list(change_points = 4, 
+               lambdas_0 = c(log(2) / 15, log(2) / 15), 
+               lambdas_1 = c(log(2) / 15, 0.7 * log(2) / 15))
+
+
+```
+
+In this case the hazard ratio is 1 for the first 4 months. Thereafter, the hazard ratio is 0.7.
+
+```{r}
+expected_events_two_arm(dco = 30,
+                        recruitment = recruitment_2,
+                        model = model_2)
+
+```
+
+
+## Dropouts
+
+We can add a parameter to deal with patients who dropout (withdraw from the study and are lost to follow-up). We assume that dropout occurs independently to the event of interest, and that time-to-dropout follows an exponential distribution with rate `mu`.
+
+For example, we can modify the above example by adding dropout at rate `mu = 0.01`:
+
+```{r}
+expected_events_two_arm(dco = 30,
+                        recruitment = recruitment_2,
+                        model = model_2,
+                        mu = 0.01)
+
+```
+
+We observe fewer events due to the competing risk of dropout. If we acutally want to see the expected number of dropouts, we need to add the argument `dropouts = TRUE`:
+
+```{r}
+expected_events_two_arm(dco = 30,
+                        recruitment = recruitment_2,
+                        model = model_2,
+                        mu = 0.01,
+                        dropouts = TRUE)
+
+```
+
+## Proportion of patients who have withdrawn
+
+The dropout parameter `mu` does not have a very intuitive interpretation. Often, we would prefer to assume something along the lines of: "we expect 10% of patients to have withdrawn at a data cut-off of 30 months".
+
+`prop_to_mu_single_arm` and `prop_to_mu_two_arm` are functions that can convert this statement into a value for `mu`.
+
+```{r}
+prop_to_mu_two_arm(prop_withdrawn = 0.1,
+                   dco = 30,
+                   recruitment = recruitment_2,
+                   model = model_2)
+```
+
+## Multiple data-cut offs
+
+The `expected_events_single_arm` and `expected_events_two_arm` functions only allow a single `dco` as first argument. To assess several data cut-offs I suggest using, e.g., `purrr::map`:
+
+
+```{r}
+dcos = seq(0.001, 30, length.out = 10)
+
+events_dco = purrr::map(dcos,
+                        expected_events_single_arm,
+                        recruitment = recruitment_1,
+                        model = model_1,
+                        mu = 0.01)
+
+dropouts_dco = purrr::map(dcos,
+                          expected_events_single_arm,
+                          recruitment = recruitment_1,
+                          model = model_1,
+                          mu = 0.01,
+                          dropouts = TRUE)
+
+round(unlist(events_dco), 1)
+round(unlist(dropouts_dco), 1)
+```
+
+## Average hazard ratio
+
+For 2-arm trials, the `expected_events_two_arm` function also calculates the 'average hazard ratio', which is defined as
+
+$$\exp\left\lbrace \sum_i p_i \log \left(  \frac{\lambda_{1,i}}{\lambda_{0,i}} \right) \right\rbrace$$
+
+where $\lambda_{0,i}$, $\lambda_{1,i}$ are the event rates on the two arms during patient-time interval [$t_i, t_{i-1}$), and $p_i$ is the proportion of total events that occur during patient-time interval [$t_i, t_{i-1}$). Here, $t_1,\ldots,t_{k-1}$ correspond to `change_points`. Also, $t_0 = 0$ and $t_{k} = \infty$.
+
+
+To see this additional information we need to add the argument `total_only = FALSE`:
+
+```{r}
+expected_events_two_arm(dco = 30,
+                        recruitment = recruitment_2,
+                        model = model_2,
+                        mu = 0.01,
+                        total_only = FALSE)
+
+```
+
+
+ 

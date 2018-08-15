@@ -1,0 +1,107 @@
+---
+title: "Vignette Title"
+author: "Vignette Author"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Vignette Info
+
+The purpose of this vignette is to explain the withdrawal/dropout modelling assumptions used in the package.
+
+## Assumptions
+
+Suppose that survival time $T$ follows a piecewise exponential model with rates $(\lambda_1, \lambda_2,\ldots, \lambda_k$) and changepoints $(t_1,\ldots,t_{k-1})$.
+
+Suppose that dropout time $C$ is independent and follows an exponential distribution with rate $\mu$.
+
+## What are we trying to calculate?
+
+We are interested in the probability that no event is observed by time $t$.
+
+
+$$pr\left( \left\lbrace T >t \text{ and }C > t\right\rbrace \text{or} \left\lbrace  T > C \text{ and }C < t\right\rbrace \right) = pr\left( T >t \text{ and }C > t\right) + pr\left( T > C \text{ and }C < t \right)$$
+
+The first term:
+
+$$pr\left( T >t \text{ and }C > t\right) = \exp(-\sum \lambda_i g(t, t_i))\exp(-\mu t)$$
+
+
+where $g(t, t_i) = \max(0, \min(t - t_{i - 1}, t_i - t_{i-1}))$.
+
+
+The second term:
+
+$$  pr\left( T > C \text{ and }C < t \right) = \int_0^t pr(T > c)f(c)dc$$
+
+
+Consider the case with just one change point, first when $t < t_1$:
+
+$$\int_0^t pr(T > c)f(c)dc ~~= \int_0^{t}\exp(-\lambda_1c)\mu\exp(-\mu c)dc$$
+$$ = \left( \frac{\mu}{\mu + \lambda_1} \right)\left[1 - \exp\left\lbrace-(\mu + \lambda_1)t\right\rbrace\right]$$
+
+Now, when $t > t_1$:
+
+$$\int_0^t pr(T > c)f(c)dc ~~= \int_0^{t_1}\exp(-\lambda_1c)\mu\exp(-\mu c)dc + \int_{t_1}^t\exp\left\lbrace-\lambda_2(c - t_1) - \lambda_1t_1\right\rbrace\mu\exp(-\mu c)dc$$
+
+The first term on the right-hand-side is:
+
+$$ \left( \frac{\mu}{\mu + \lambda_1} \right)\left[1 - \exp\left\lbrace-(\mu + \lambda_1)t_1\right\rbrace\right].$$
+
+The second term on the right-hand-side is equal to:
+
+$$-\left( \frac{\mu}{\mu + \lambda_2} \right) \left[ \exp\left\lbrace -\lambda_2(t - t_1)-\lambda_1t_1-\mu t\right\rbrace  - \exp\left\lbrace-(\mu + \lambda_1)t_1 \right\rbrace \right] $$
+
+
+$$= \left( \frac{\mu}{\mu + \lambda_2} \right) \exp\left\lbrace-(\mu + \lambda_1)t_1\right\rbrace\left[1 - \exp\left\lbrace-(\mu + \lambda_2)(t - t_1)\right\rbrace\right]$$
+
+And it's easy to see how this formula is extended for more changepoints. This formula makes sense: we calculate the probability that $\min(T,C)$ occurs in an interval $t_{i-1}, t_i$, multiply this by the probability the minimum was $C$ rather the $T$ (which is just $\mu / (\mu + \lambda_i)$), and then we sum over the intervals up to time $t$.
+
+
+## Computation
+
+
+```{r}
+devtools::load_all("..")
+surv_pieces(t = 5, 
+            change_points = 10,
+            lambdas = c(log(2) / 15, 
+                        log(2) / 15), 
+            mu = 0.12, 
+            dropouts = FALSE)
+```
+
+
+## What if we are interested in the number of dropouts?
+
+If, instead, we were interested in the probability that a patient has not dropped out by time $t$ we would simply switch 
+
+$$\frac{\mu}{\lambda_i + \mu}$$
+
+for 
+
+$$\frac{\lambda_i}{\lambda_i + \mu}$$
+
+in the above formulae. We can do this with the `surv_pieces` function by change `dropouts` to `TRUE`:
+
+```{r}
+surv_pieces(t = 5, 
+            change_points = 10,
+            lambdas = c(log(2) / 15, 
+                        log(2) / 15), 
+            mu = 0.12, 
+            dropouts = TRUE)
+```
+
+
