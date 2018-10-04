@@ -117,3 +117,4 @@ points(dcos, dropouts_dco_e, type = 'l', col = 3)
 legend("topleft", c("recruited", "events", "withdrawn"), lty = c(1,1,1), col = c(1,2,3))
 
 devtools::use_vignette("expectedevents")
+devtools::use_package("purrr")

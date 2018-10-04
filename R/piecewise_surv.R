@@ -26,11 +26,12 @@ surv_pieces_simple = function(t, change_points, lambdas){
 #' 
 #' \code{surv_pieces} returns the probability of being event-free at time \code{t} assuming piecewise constant hazard.
 #' @param{t} time
-#' @param{change_points} The breakpoints for the piecewise hazard function
-#' @param{lambdas} A vector of length one more than \code{change_points}. The hazard between consecutive breakpoints in \code{ts}.
+#' @param{change_points} The breakpoints for the piecewise hazard function.
+#' @param{lambdas} A vector of length one more than \code{change_points}. 
+#'   The hazard between consecutive breakpoints in \code{c(0, change_points, Inf)}.
 #' @param{mu} The dropout hazard (a constant). Assumed independent to event hazard. 
 #' @param{dropouts} Is dropout the event of interest? Default is FALSE.
-#' @return The probability of survival to time \code{t}.
+#' @return The probability of being free of the event-of-interest at time \code{t}.
 #' @export
 
 

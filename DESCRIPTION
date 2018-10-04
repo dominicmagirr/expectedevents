@@ -1,11 +1,15 @@
 Package: expectedevents
-Title: What the Package Does (one line, title case)
+Title: Calculate the expected number of events
 Version: 0.0.0.9000
-Authors@R: person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Authors@R: person("Dominic", "Magirr", email = "d.magirr@gmail.com", role = c("aut", "cre"))
+Description: Calculate the expected number of events at data cut-off in time-to-event trials.
+    Assumes piecewise exponential survival times, an (independent) exponential withdrawal rate,
+    and recruitment following a simple power distribution.
 Depends: R (>= 3.2.4)
-License: What license is it under?
+License: GPL-3
 LazyData: true
 Suggests: knitr,
     rmarkdown
 VignetteBuilder: knitr
+Imports: purrr
+RoxygenNote: 6.0.1

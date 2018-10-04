@@ -91,20 +91,29 @@ p_event = function(r_period,
 }
 
 
+#' Expected number of events
+#' 
+#' \code{expected_events_single_arm} returns the expected number of events at a given data-cut-off time.
+#' @param{dco} Time of data cut-off. 
+#' @param{recruitment} List of recruitment information. 
+#'   Containing \enumerate{
+#'                 \item Sample size, \code{n} 
+#'                 \item Recruitment period, \code{r_period}
+#'                 \item Recruitment parameter for power model, \code{k} 
+#'               }
+#' @param{model} The piecewise hazard model.
+#'   A list containing the \code{change_points} and \code{lambdas}.
+#' @param{mu} The dropout rate. Assumed independent to event hazard. 
+#' @param{dropouts} Is dropout the event of interest? Default is FALSE.
+#' @param{total_only} By default, the function returns only the expected number of events.
+#'   To see more detailed output set \code{total_only = FALSE}.
+#' @return The expected number of events at \code{dco}.
+#' @export
 
-
-
-####################################################
-## expected events by dco (data cut-off)
 
 expected_events_single_arm = function(dco = 28,
                                       recruitment,
-                                      #n = 100,
-                                      #r_period = 12,
-                                      #k = 1,
                                       model,
-                                      #change_points = 10,
-                                      #lambdas = c(log(2) / 15, log(2) / 15),
                                       mu = 0,
                                       dropouts = FALSE,
                                       total_only = TRUE){
@@ -157,19 +166,29 @@ expected_events_single_arm = function(dco = 28,
 
 
 
-####################################################
-## expected events by dco (data cut-off)
+#' Expected number of events
+#' 
+#' \code{expected_events_two_arm} returns the expected number of events at a given data-cut-off time.
+#' @param{dco} Time of data cut-off. 
+#' @param{recruitment} List of recruitment information. 
+#'   Containing \enumerate{
+#'                 \item Sample size on control, \code{n_0} 
+#'                 \item Sample size on experimental, \code{n_1} 
+#'                 \item Recruitment period, \code{r_period}
+#'                 \item Recruitment parameter for power model, \code{k} 
+#'               }
+#' @param{model} The piecewise hazard model.
+#'   A list containing the \code{change_points} and \code{lambdas}.
+#' @param{mu} The dropout rate. Assumed independent to event hazard. 
+#' @param{dropouts} Is dropout the event of interest? Default is FALSE.
+#' @param{total_only} By default, the function returns only the expected number of events.
+#'   To see more detailed output set \code{total_only = FALSE}.
+#' @return The expected number of events at \code{dco}.
+#' @export
 
 expected_events_two_arm = function(dco = 28,
                                    recruitment,
-                                   #n_0 = 100,
-                                   #n_1 = 100,
-                                   #r_period = 12,
-                                   #k = 1,
                                    model,
-                                   #change_points = 10,
-                                   #lambdas_0 = c(log(2) / 15, log(2) / 15),
-                                   #lambdas_1 = c(log(2) / 15, log(2) / 15),
                                    mu = 0,
                                    dropouts = FALSE,
                                    total_only = TRUE){
