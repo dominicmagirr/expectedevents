@@ -44,8 +44,8 @@ In this package, we only allow piece-wise exponential models with at least 2 pie
 How many events at a data cut-off (`dco`) at 30 months?
 
 ```{r}
+#library(expectedevents)
 devtools::load_all("..")
-
 expected_events_single_arm(dco = 30,
                            recruitment = recruitment_1,
                            model = model_1)
@@ -100,7 +100,8 @@ We observe fewer events due to the competing risk of dropout. If we acutally wan
 expected_events_two_arm(dco = 30,
                         recruitment = recruitment_2,
                         model = model_2,
-                        mu = 0.01,
+                        #mu = 0.01,
+                        mu = 0.0,
                         dropouts = TRUE)
 
 ```
@@ -162,6 +163,87 @@ expected_events_two_arm(dco = 30,
                         total_only = FALSE)
 
 ```
+
+## Approximating a survival curve from a different model
+
+Let's take the example of a cure rate model. Consider an adjuvant study where 70% of patients are already "cured" coming in. Suppose for the "non-cured" patients, the hazard rate is $\log(2)/12$ on the control arm and $\log(2) / 6$ on the experimental arm. Overall, the hazard rates are non-proportional...
+
+```{r}
+# survival
+s_c = function(t) 0.7 + 0.3 * exp(-log(2) / 12 * t)
+s_e = function(t) 0.7 + 0.3 * exp(-log(2) / 6 * t)
+# density
+f_c = function(t) log(2) / 12 * 0.3 * exp(-log(2) / 12 * t)
+f_e = function(t) log(2) / 6 * 0.3 * exp(-log(2) / 6 * t)
+# hazard
+h_c = function(t) f_c(t) / s_c(t)
+h_e = function(t) f_e(t) / s_e(t)
+# hazard ratio
+hr = function(t) h_e(t) / h_c(t)
+
+ts = seq(0, 48, by = 1)
+
+plot(ts, h_c(ts),
+     type = 'l',
+     ylim = c(0,0.05),
+     ylab = "hazard",
+     xlab = "time")
+
+points(ts,
+       h_e(ts),
+       type = 'l',
+       col = 2)
+
+legend("topright",
+       c("control", "experimental"),
+       lty = c(1,1),
+       col = 1:2)
+
+### approximate model
+
+model_approx = list(change_points = seq(2, 46, by = 2), 
+                    lambdas_0 = h_c(seq(1, 47, by = 2)), 
+                    lambdas_1 = h_e(seq(1, 47, by = 2)))
+
+points(c(0, model_approx$change_points), model_approx$lambdas_0, type = 's')
+points(c(0, model_approx$change_points), model_approx$lambdas_1, type = 's', col = 2)
+
+
+```
+
+
+
+We can use this approximate model, as before.
+
+```{r}
+expected_events_two_arm(dco = 30,
+                        recruitment = recruitment_2,
+                        model = model_approx,
+                        mu = 0.01,
+                        dropouts = TRUE)
+
+```
+
+## Example how to plot survival curves from approximation
+
+```{r}
+plot(seq(0, 48, length.out = 100),
+     unlist(purrr::map(seq(0, 48, length.out = 100), 
+                       surv_pieces,
+                       change_points = model_approx$change_points,
+                       lambdas = model_approx$lambdas_0)),
+     type = 'l',
+     ylim = c(0,1),
+     ylab = "survival",
+     xlab = "time")
+```
+
+
+
+
+
+
+
 
 
  
