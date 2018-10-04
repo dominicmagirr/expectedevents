@@ -100,15 +100,14 @@ We observe fewer events due to the competing risk of dropout. If we acutally wan
 expected_events_two_arm(dco = 30,
                         recruitment = recruitment_2,
                         model = model_2,
-                        #mu = 0.01,
-                        mu = 0.0,
+                        mu = 0.01,
                         dropouts = TRUE)
 
 ```
 
 ## Proportion of patients who have withdrawn
 
-The dropout parameter `mu` does not have a very intuitive interpretation. Often, we would prefer to assume something along the lines of: "we expect 10% of patients to have withdrawn at a data cut-off of 30 months".
+The dropout parameter `mu` does not have a very intuitive interpretation. Often, we would prefer to assume something along the lines of: "we expect 10% of patients (out of the final total sample size) to have withdrawn at a data cut-off of 30 months".
 
 `prop_to_mu_single_arm` and `prop_to_mu_two_arm` are functions that can convert this statement into a value for `mu`.
 
@@ -219,8 +218,7 @@ We can use this approximate model, as before.
 expected_events_two_arm(dco = 30,
                         recruitment = recruitment_2,
                         model = model_approx,
-                        mu = 0.01,
-                        dropouts = TRUE)
+                        mu = 0.01)
 
 ```
 
@@ -239,6 +237,47 @@ plot(seq(0, 48, length.out = 100),
 ```
 
 
+## Calculating power for a GSD under NPH
+
+```{r}
+library(gsDesign)
+library(mvtnorm)
+## get timing
+event_targets = c(60, 120)
+
+dcos = purrr::map_dbl(event_targets, expected_dco_two_arm, 
+                      recruitment = recruitment_2,
+                      model = model_2,
+                      mu = 0,
+                      dropouts = FALSE)
+
+## get average hazard ratios
+full_info = purrr::map(dcos, expected_events_two_arm,
+                       recruitment = recruitment_2,
+                       model = model_2,
+                       mu = 0,
+                       dropouts = FALSE,
+                       total_only = FALSE)
+
+av_hrs = purrr::map_dbl(full_info, function(x) x$av_hr)
+
+## get bound
+d = gsDesign(k = 2, test.type = 1, sfu = sfLDOF)
+d$upper$bound
+
+p = get_power(events = event_targets,
+              av_hrs = av_hrs,
+              upper_bound = c(d$upper$bound),
+              lower_bound = c(0, c(d$upper$bound)[2]),
+              recruitment = recruitment_2)
+
+p$power_so_far
+cumsum(p$upper_stopping)
+
+p$upper_stopping
+p$lower_stopping
+
+```
 
 
 

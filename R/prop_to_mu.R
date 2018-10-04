@@ -24,7 +24,7 @@ expected_events_single_arm_mu = function(mu,
 
 #' Convert a proportion of dropouts to a dropout rate.
 #' 
-#' \code{prop_to_mu_single_arm} converts a proportion of patients who have withdrawn at data cut-off \code{dco}
+#' \code{prop_to_mu_single_arm} converts a proportion of patients (out of the final total sample size) who have withdrawn at data cut-off \code{dco}
 #'   to the corresponding exponential dropout rate. This takes into acount the competing 
 #'   risk of the event-of-interest.
 #' @param{dco} Time of data cut-off. 
@@ -84,7 +84,7 @@ expected_events_two_arm_mu = function(mu,
 
 #' Convert a proportion of dropouts to a dropout rate.
 #' 
-#' \code{prop_to_mu_two_arm} converts a proportion of patients who have withdrawn at data cut-off \code{dco}
+#' \code{prop_to_mu_two_arm} converts a proportion of patients (out of the final total sample size) who have withdrawn at data cut-off \code{dco}
 #'   to the corresponding exponential dropout rate. This takes into acount the competing 
 #'   risk of the event-of-interest.
 #' @param{dco} Time of data cut-off. 

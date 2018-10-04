@@ -9,7 +9,10 @@ Depends: R (>= 3.2.4)
 License: GPL-3
 LazyData: true
 Suggests: knitr,
-    rmarkdown
+    rmarkdown,
+    gsDesign,
+    purrr,
+    mvtnorm
 VignetteBuilder: knitr
 Imports: purrr
 RoxygenNote: 6.0.1
