@@ -14,7 +14,7 @@ vignette: >
 
 When designing a trial with a time-to-event endpoint, we often want to know how many events are expected at a given calendar time.
 
-We will typically have some information on recruitment...
+We will typically have some information on recruitment.
 
 ```{r}
 #### recruitment information
@@ -23,7 +23,7 @@ recruitment_1 = list(n = 100,
                      k = 1)
 ```
 
-...in this case, a single arm trial with 100 patients recruited over 12 months. The parameter $k$ dictates the shape of the recruitment curve:
+In this case, a single arm trial with 100 patients recruited over 12 months. The parameter $k$ dictates the shape of the recruitment curve:
 
 $$pr(\text{recruited by calendar time t}) = (t / \text{r_period}) ^ k.$$
 
