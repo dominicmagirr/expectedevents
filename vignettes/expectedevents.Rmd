@@ -126,21 +126,21 @@ The `expected_events_single_arm` and `expected_events_two_arm` functions only al
 ```{r}
 dcos = seq(0.001, 30, length.out = 10)
 
-events_dco = purrr::map(dcos,
-                        expected_events_single_arm,
-                        recruitment = recruitment_1,
-                        model = model_1,
-                        mu = 0.01)
+events_dco = purrr::map_dbl(dcos,
+                            expected_events_single_arm,
+                            recruitment = recruitment_1,
+                            model = model_1,
+                            mu = 0.01)
 
-dropouts_dco = purrr::map(dcos,
-                          expected_events_single_arm,
-                          recruitment = recruitment_1,
-                          model = model_1,
-                          mu = 0.01,
-                          dropouts = TRUE)
+dropouts_dco = purrr::map_dbl(dcos,
+                              expected_events_single_arm,
+                              recruitment = recruitment_1,
+                              model = model_1,
+                              mu = 0.01,
+                              dropouts = TRUE)
 
-round(unlist(events_dco), 1)
-round(unlist(dropouts_dco), 1)
+round(events_dco, 1)
+round(dropouts_dco, 1)
 ```
 
 ## Average hazard ratio
@@ -226,10 +226,10 @@ expected_events_two_arm(dco = 30,
 
 ```{r}
 plot(seq(0, 48, length.out = 100),
-     unlist(purrr::map(seq(0, 48, length.out = 100), 
-                       surv_pieces,
-                       change_points = model_approx$change_points,
-                       lambdas = model_approx$lambdas_0)),
+     purrr::map_dbl(seq(0, 48, length.out = 100), 
+                    surv_pieces,
+                    change_points = model_approx$change_points,
+                    lambdas = model_approx$lambdas_0),
      type = 'l',
      ylim = c(0,1),
      ylab = "survival",
@@ -239,18 +239,30 @@ plot(seq(0, 48, length.out = 100),
 
 ## Calculating power for a GSD under NPH
 
+Suppose you plan to trigger an interim analysis after 60 events, and the final analysis after 120 events.
+
 ```{r}
 library(gsDesign)
 library(mvtnorm)
-## get timing
-event_targets = c(60, 120)
 
+event_targets = c(60, 120)
+```
+
+The first step is to predict at what calendar times we expect to reach these milestones.
+
+```{r}
+## get timing
 dcos = purrr::map_dbl(event_targets, expected_dco_two_arm, 
                       recruitment = recruitment_2,
                       model = model_2,
                       mu = 0,
                       dropouts = FALSE)
+dcos
+```
 
+Next we calculate the average hazard ratio at these milestones.
+
+```{r}
 ## get average hazard ratios
 full_info = purrr::map(dcos, expected_events_two_arm,
                        recruitment = recruitment_2,
@@ -261,9 +273,17 @@ full_info = purrr::map(dcos, expected_events_two_arm,
 
 av_hrs = purrr::map_dbl(full_info, function(x) x$av_hr)
 
+av_hrs
+```
+
+In this example suppose we are using an O'Brien and Fleming upper boundary, with a non-binding futility boundary at Z =  0.
+
+We can use the function 'get_power' to calculate the probability of crossing each boundary point, and therefore the cumulative power.
+
+```{r}
 ## get bound
 d = gsDesign(k = 2, test.type = 1, sfu = sfLDOF)
-d$upper$bound
+
 
 p = get_power(events = event_targets,
               av_hrs = av_hrs,
@@ -271,12 +291,7 @@ p = get_power(events = event_targets,
               lower_bound = c(0, c(d$upper$bound)[2]),
               recruitment = recruitment_2)
 
-p$power_so_far
-cumsum(p$upper_stopping)
-
-p$upper_stopping
-p$lower_stopping
-
+p
 ```
 
 

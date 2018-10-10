@@ -84,7 +84,11 @@ get_power = function(events,
     power_so_far = cumsum(upper_stopping)
   }
   
-  list(upper_stopping = upper_stopping,
+  list(upper_bound = upper_bound,
+       lower_bound = lower_bound,
+       events = events,
+       av_hrs = av_hrs,
+       upper_stopping = upper_stopping,
        power_so_far = power_so_far,
        lower_stopping = lower_stopping)
   
